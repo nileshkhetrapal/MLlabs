@@ -109,7 +109,7 @@ You've built a chatbot using Hugging Face and Gradio and learned about fine-tuni
 Here are some additional resources:
 
 - [Hugging Face Fine-Tuning Guide](https://huggingface.co/transformers/training.html)
-- [Practical Guide to Fine-Tuning Transformers](https://towardsdatascience.com/fine-tuning-transformers-723e6c2ea7ea)
+- [Practical Guide to Fine-Tuning Transformers](https://medium.com/@hassaanidrees7/fine-tuning-transformers-techniques-for-improving-model-performance-4b4353e8ba93)
 
 **Exercise 6.1**: What are some potential issues with the way we fine-tuned our model? 
 
