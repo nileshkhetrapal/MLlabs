@@ -5,6 +5,7 @@ Let's start by loading an image and performing some basic operations on it.
 1. First, import the required library:
 ```python
 from PIL import Image
+import matplotlib.pyplot as plt
 ```
 2. Load an image (you can use any image you want, just make sure it's in the same directory as your notebook):
 ```python
@@ -22,6 +23,7 @@ img_resized.show()
 ```python
 img_gray = img_resized.convert('L')
 img_gray.show()
+plt.imshow(img_gray,cmap = 'gray')
 ```
 *Task*: Now, it's your turn. Load your own image, resize it, convert it to grayscale, and display it. Feel free to experiment with different sizes and color conversions.
 ## Part 2: Introduction to Keras
@@ -55,6 +57,15 @@ test_labels = to_categorical(test_labels)
 ```python
 model = Sequential()
 model.add(Dense(512, activation='relu', input_shape=(28 * 28,)))
+model.add(Dense(10, activation='softmax'))
+```
+**OR**
+```python
+model = Sequential()
+model.add(Dense(512, activation='relu', input_shape=(28 * 28,)))
+model.add(Dense(256, activation='relu', input_shape=(28 * 28,)))
+model.add(Dense(128, activation='relu', input_shape=(28 * 28,)))
+
 model.add(Dense(10, activation='softmax'))
 ```
 6. Compile the model:

@@ -85,22 +85,25 @@ embedding_dim = 256
 rnn_units = 1024
 
 def build_model(vocab_size, embedding_dim, rnn_units, batch_size):
-  model = tf.keras.Sequential([
-    tf.keras.layers.Embedding(vocab_size, embedding_dim,
-                              batch_input_shape=[batch_size, None]),
-    tf.keras.layers.LSTM(rnn_units,
-                        return_sequences=True,
-                        stateful=True,
-                        recurrent_initializer='glorot_uniform'),
-    tf.keras.layers.Dense(vocab_size)
-  ])
-  return model
-
+    model = tf.keras.Sequential([
+        tf.keras.layers.Embedding(vocab_size, embedding_dim),
+        tf.keras.layers.LSTM(rnn_units, return_sequences=True, stateful=True, recurrent_initializer='glorot_uniform'),
+        tf.keras.layers.Dense(vocab_size)
+    ])
+    # We will specify the batch input shape for the LSTM layer
+    model.build(input_shape=(batch_size, None))
+    return model
+#Set the Batch Size
+BATCH_SIZE = 64
 model = build_model(
   vocab_size = len(vocab),
   embedding_dim=embedding_dim,
   rnn_units=rnn_units,
-  batch_size=64)
+  batch_size=BATCH_SIZE)
+```
+**Also print the model summary**
+```python
+model.summary()
 ```
 
 **Exercise 5.1**: What does each layer in this model do? 
@@ -115,14 +118,23 @@ model.compile(optimizer='adam', loss=loss)
 
 # Directory where the checkpoints will be saved
 checkpoint_dir = './training_checkpoints'
-checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt_{epoch}")
+checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt_{epoch}.weights.h5")
 
 checkpoint_callback=tf.keras.callbacks.ModelCheckpoint(
     filepath=checkpoint_prefix,
     save_weights_only=True)
 
+
+```
+
+**Prepare DataSet for Training**
+```python
+dataset = sequences.map(lambda x: (x[:-1], x[1:])).batch(BATCH_SIZE, drop_remainder=True)
+
+#Train the model
 history = model.fit(dataset, epochs=10, callbacks=[checkpoint_callback])
 ```
+
 
 **Exercise 6.1**: What is the purpose of the checkpoint directory? 
 
@@ -137,7 +149,7 @@ def generate_text(model, start_string):
 
   # Converting our start string to numbers (vectorizing)
   input_eval = [char2idx[s] for s in start_string]
-  input_eval = tf.expand_dims(input_eval, 0)
+  input_eval = tf.expand_dims(input_eval, 0) # Shape (1, start_string_length)
 
   # Empty string to store our results
   text_generated = []
@@ -146,20 +158,25 @@ def generate_text(model, start_string):
   # Higher temperature results in more surprising text.
   temperature = 1.0
 
-  # Here batch size == 1
-  model.reset_states()
+
+    # Reset the states of the LSTM layers
+  for layer in model.layers:
+      if isinstance(layer, tf.keras.layers.LSTM):
+          layer.reset_states()
+
   for i in range(num_generate):
-      predictions = model(input_eval)
-      # remove the batch dimension
-      predictions = tf.squeeze(predictions, 0)
+      predictions = model(input_eval) # Shape (1, seq_length, vocab_size)
+
+      # Use only the last prediction for sampling
+      predictions = predictions[:, -1, :]  # Shape (1, vocab_size)
 
       # using a categorical distribution to predict the character returned by the model
       predictions = predictions / temperature
-      predicted_id = tf.random.categorical(predictions, num_samples=1)[-1,0].numpy()
+      predicted_id = tf.random.categorical(tf.squeeze(predictions), num_samples=1)[-1,0].numpy()
 
       # We pass the predicted character as the next input to the model
       # along with the previous hidden state
-      input_eval = tf.expand_dims([predicted_id], 0)
+      input_eval = tf.expand_dims([predicted_id], 0) # Shape (1, 1)
 
       text_generated.append(idx2char[predicted_id])
 
